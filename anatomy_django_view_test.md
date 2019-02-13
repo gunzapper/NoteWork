@@ -5,14 +5,15 @@
 * [Create a fake user](#fakeuser)
 * [Menage the session](#session)
 * [Request object ](#request)
+* [Test redirection](#test-redirection)
 
 ## <a name="prereq"></a> Prerequisites
 
 I use
 
 ```{python}
-    import pytest
-    from model_mommy import mommy
+import pytest
+from model_mommy import mommy
 ```
 
 I also use [pytest-django](https://pytest-django.readthedocs.io/en/latest/)
@@ -22,14 +23,14 @@ I also use [pytest-django](https://pytest-django.readthedocs.io/en/latest/)
 The first thing to test is if the url correspond to the right view function. We have to write a simple test.
 
 ```{python}
-    from my_app import views
-    from django.urls import resolve
+from my_app import views
+from django.urls import resolve
 
 
-    def test_url_resolve(live_server):
-        """test if the view is mapped to correct url."""
-        found = resolve("/my/url")
-        assert found.func == views.my_view
+def test_url_resolve(live_server):
+    """test if the view is mapped to correct url."""
+    found = resolve("/my/url")
+    assert found.func == views.my_view
 ```
 
 `live_server` is a pytest-django fixture.
@@ -40,19 +41,19 @@ We use to create a fixture in `conftest.py`
 
 ```{python}
 
-    import pytest
+import pytest
 
 
-    @pytest.fixture
-    def fake_user(django_user_model):
-        """create a fake user."""
-        return mommy.make(django_user_model)  
+@pytest.fixture
+def fake_user(django_user_model):
+    """create a fake user."""
+    return mommy.make(django_user_model)  
 
 
-    @pytest.fixture
-    def fake_super_user(django_user_model):
-        """create a fake super user."""
-        return mommy.make(django_user_model, is_superuser=True)
+@pytest.fixture
+def fake_super_user(django_user_model):
+    """create a fake super user."""
+    return mommy.make(django_user_model, is_superuser=True)
 ```
 
 The `django_user_model` is a fixture of django-pytest
@@ -90,5 +91,25 @@ def _request(rf, client, fake_user):
     return request
 ```
 
+## <a name="test-redirection"></a> Test redirection
 
+To test if your view redirects properly you have to test
+
+ 1. that the status code is 302
+ 2. the new location is the expected one
+
+
+```{python}
+from django.url import reverse
+
+def test_my_example(_request):
+    """
+    test redirection of my_example view.
+  
+    :param: _request - is the fixture that return the fake request
+    """
+    response = views.my_example(_request)
+    assert response.status_code == 302
+    assert response["Location"] == reverse("my_app:the_name")
+```
 
